@@ -1,0 +1,185 @@
+Starting copy of base.orders with columns [id, customer, date, cost, items].
+Processed: 5 rows; Rate:       7 rows/s; Avg. rate:      11 rows/s
+5 rows imported from 1 files in 0.458 seconds (0 skipped).
+
+CREATE TABLE base.orders (
+    id uuid,
+    customer text,
+    cost double,
+    date timestamp,
+    items list<frozen<tuple<uuid, int, double>>>,
+    PRIMARY KEY (id, customer)
+) WITH CLUSTERING ORDER BY (customer ASC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.1
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+CREATE INDEX orders_customer_idx ON base.orders (customer);
+CREATE INDEX orders_items_idx ON base.orders (values(items));
+CREATE INDEX orders_cost_idx ON base.orders (cost);
+CREATE INDEX orders_date_idx ON base.orders (date);
+
+CREATE MATERIALIZED VIEW base.orders_by_customer_date AS
+    SELECT customer, date, id
+    FROM base.orders
+    WHERE customer IS NOT NULL AND date IS NOT NULL AND cost IS NOT NULL AND items IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY (customer, date, id)
+    WITH CLUSTERING ORDER BY (date DESC, id ASC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.1
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+CREATE MATERIALIZED VIEW base.orders_by_customer_cost AS
+    SELECT customer, cost, id
+    FROM base.orders
+    WHERE customer IS NOT NULL AND date IS NOT NULL AND cost IS NOT NULL AND items IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY (customer, cost, id)
+    WITH CLUSTERING ORDER BY (cost ASC, id ASC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.1
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+
+ id                                   | customer            | cost | date                            | items
+--------------------------------------+---------------------+------+---------------------------------+---------------------------------------------------------------------------------------------------
+ 77106339-5270-4293-9969-85f86760f6ca |      Corena Heisman |  600 | 2018-01-21 00:00:00.000000+0000 |                                                  [(13eaefac-ec5b-d86a-d943-8303acf1c80e, 3, 200)]
+ c4f5c3cc-0a62-436b-ba7c-b1f5371ed6e9 | Abeu Von Hindenburg |  400 | 2017-10-23 00:00:00.000000+0000 |                                                  [(531f6eca-f441-29f9-254f-9539f30cb3ee, 1, 400)]
+ ddf50932-3e3a-4e89-ac8c-b9fb68d33d6c | Abeu Von Hindenburg | 1700 | 2017-04-17 00:00:00.000000+0000 | [(41eea1df-a3b6-bd0c-8cb1-02fd93cf9f21, 1, 1100), (1b938a39-dcb0-961c-5b5d-05b25bd6f79c, 1, 600)]
+ 75211e4a-3921-4d2c-ab62-90205e6b3077 |       Cull Griswood | 2000 | 2017-05-14 00:00:00.000000+0000 | [(531f6eca-f441-29f9-254f-9539f30cb3ee, 1, 400), (60fa0bf7-2eb2-43b5-e503-75a417677d70, 1, 1600)]
+ 4c82d0e6-97b5-4752-95ae-c33d57f424ee |      Corena Heisman |  400 | 2017-08-30 00:00:00.000000+0000 |                                                  [(531f6eca-f441-29f9-254f-9539f30cb3ee, 1, 400)]
+
+(5 rows)
+
+ customer            | date                            | id
+---------------------+---------------------------------+--------------------------------------
+ Abeu Von Hindenburg | 2017-04-17 00:00:00.000000+0000 | ddf50932-3e3a-4e89-ac8c-b9fb68d33d6c
+ Abeu Von Hindenburg | 2017-10-23 00:00:00.000000+0000 | c4f5c3cc-0a62-436b-ba7c-b1f5371ed6e9
+
+(2 rows)
+
+ id                                   | customer            | cost | date                            | items
+--------------------------------------+---------------------+------+---------------------------------+--------------------------------------------------
+ c4f5c3cc-0a62-436b-ba7c-b1f5371ed6e9 | Abeu Von Hindenburg |  400 | 2017-10-23 00:00:00.000000+0000 | [(531f6eca-f441-29f9-254f-9539f30cb3ee, 1, 400)]
+
+(1 rows)
+
+ customer            | date                            | id
+---------------------+---------------------------------+--------------------------------------
+ Abeu Von Hindenburg | 2017-10-23 00:00:00.000000+0000 | c4f5c3cc-0a62-436b-ba7c-b1f5371ed6e9
+ Abeu Von Hindenburg | 2017-04-17 00:00:00.000000+0000 | ddf50932-3e3a-4e89-ac8c-b9fb68d33d6c
+
+(2 rows)
+
+ count
+-------
+     2
+
+(1 rows)
+
+ customer            | system.avg(cost)
+---------------------+------------------
+ Abeu Von Hindenburg |             1050
+       Cull Griswood |             2000
+      Corena Heisman |              500
+
+(3 rows)
+
+Warnings :
+Aggregation query used without partition key
+
+
+ customer            | system.sum(cost)
+---------------------+------------------
+ Abeu Von Hindenburg |             2100
+       Cull Griswood |             2000
+      Corena Heisman |             1000
+
+(3 rows)
+
+Warnings :
+Aggregation query used without partition key
+
+
+ customer            | id                                   | system.max(cost)
+---------------------+--------------------------------------+------------------
+ Abeu Von Hindenburg | c4f5c3cc-0a62-436b-ba7c-b1f5371ed6e9 |             1700
+       Cull Griswood | 75211e4a-3921-4d2c-ab62-90205e6b3077 |             2000
+      Corena Heisman | 4c82d0e6-97b5-4752-95ae-c33d57f424ee |              600
+
+(3 rows)
+
+Warnings :
+Aggregation query used without partition key
+
+
+ id                                   | customer            | cost | date                            | items
+--------------------------------------+---------------------+------+---------------------------------+--------------------------------------------------
+ c4f5c3cc-0a62-436b-ba7c-b1f5371ed6e9 | Abeu Von Hindenburg |  400 | 2017-10-23 00:00:00.000000+0000 | [(531f6eca-f441-29f9-254f-9539f30cb3ee, 1, 400)]
+
+(1 rows)
+
+ id                                   | customer            | cost | date                            | items
+--------------------------------------+---------------------+------+---------------------------------+---------------------------------------------------------------------------------------------------
+ c4f5c3cc-0a62-436b-ba7c-b1f5371ed6e9 | Abeu Von Hindenburg | 1500 | 2017-10-23 00:00:00.000000+0000 | [(531f6eca-f441-29f9-254f-9539f30cb3ee, 1, 400), (41eea1df-a3b6-bd0c-8cb1-02fd93cf9f21, 1, 1100)]
+
+(1 rows)
+
+ id                                   | writetime(cost)
+--------------------------------------+------------------
+ 77106339-5270-4293-9969-85f86760f6ca | 1518799813798540
+ c4f5c3cc-0a62-436b-ba7c-b1f5371ed6e9 | 1518799814500166
+ ddf50932-3e3a-4e89-ac8c-b9fb68d33d6c | 1518799813798540
+ 75211e4a-3921-4d2c-ab62-90205e6b3077 | 1518799813798540
+ 4c82d0e6-97b5-4752-95ae-c33d57f424ee | 1518799813798540
+
+(5 rows)
+
+ ttl(date)
+-----------
+         5
+
+(1 rows)
+
+ [json]
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ {"id": "c4f5c3cc-0a62-436b-ba7c-b1f5371ed6e9", "customer": "Abeu Von Hindenburg", "cost": 1500.0, "date": "2017-10-23 00:00:00.000Z", "items": [["531f6eca-f441-29f9-254f-9539f30cb3ee", 1, 400.0], ["41eea1df-a3b6-bd0c-8cb1-02fd93cf9f21", 1, 1100.0]]}
+
+(1 rows)
+
+ id                                   | customer            | cost | date                            | items
+--------------------------------------+---------------------+------+---------------------------------+--------------------------------------------------
+ fc179a90-dc58-4089-b3e6-8a3eecad7abd | Abeu Von Hindenburg |  800 | 2017-10-25 00:00:00.000000+0000 | [(531f6eca-f441-29f9-254f-9539f30cb3ee, 2, 400)]
+
+(1 rows)

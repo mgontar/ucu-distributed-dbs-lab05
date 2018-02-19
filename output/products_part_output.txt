@@ -1,0 +1,182 @@
+Starting copy of base.products with columns [id, category, model, producer, price, properties].
+Processed: 9 rows; Rate:      11 rows/s; Avg. rate:      17 rows/s
+9 rows imported from 1 files in 0.532 seconds (0 skipped).
+
+CREATE TABLE base.products (
+    id uuid,
+    category text,
+    model text,
+    price double,
+    producer text,
+    properties map<text, text>,
+    PRIMARY KEY (id, category)
+) WITH CLUSTERING ORDER BY (category ASC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.1
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+CREATE INDEX products_price_idx ON base.products (price);
+CREATE INDEX products_producer_idx ON base.products (producer);
+CREATE INDEX products_model_idx ON base.products (model);
+CREATE INDEX products_category_idx ON base.products (category);
+CREATE INDEX products_properties_idx ON base.products (entries(properties));
+
+CREATE MATERIALIZED VIEW base.products_by_category_price_producer AS
+    SELECT category, producer, id, price
+    FROM base.products
+    WHERE category IS NOT NULL AND model IS NOT NULL AND producer IS NOT NULL AND price IS NOT NULL AND properties IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY (category, producer, id)
+    WITH CLUSTERING ORDER BY (producer ASC, id ASC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.1
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+CREATE MATERIALIZED VIEW base.products_by_category_price AS
+    SELECT category, price, id
+    FROM base.products
+    WHERE category IS NOT NULL AND model IS NOT NULL AND producer IS NOT NULL AND price IS NOT NULL AND properties IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY (category, price, id)
+    WITH CLUSTERING ORDER BY (price DESC, id ASC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.1
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+CREATE MATERIALIZED VIEW base.products_by_category_model AS
+    SELECT category, model, id
+    FROM base.products
+    WHERE category IS NOT NULL AND model IS NOT NULL AND producer IS NOT NULL AND price IS NOT NULL AND properties IS NOT NULL AND id IS NOT NULL
+    PRIMARY KEY (category, model, id)
+    WITH CLUSTERING ORDER BY (model ASC, id ASC)
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '64', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND dclocal_read_repair_chance = 0.1
+    AND default_time_to_live = 0
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair_chance = 0.0
+    AND speculative_retry = '99PERCENTILE';
+
+
+ id                                   | category | model      | price | producer | properties
+--------------------------------------+----------+------------+-------+----------+--------------------
+ 531f6eca-f441-29f9-254f-9539f30cb3ee |    Phone |   IPhone 5 |   400 |    Apple | {'SIM': 'miniSIM'}
+ 41eea1df-a3b6-bd0c-8cb1-02fd93cf9f21 | Notebook |   Yoga 710 |  1100 |   Lenovo |    {'Memory': '4'}
+ e22dc981-298b-6576-6f42-f6f82c4550aa |    Phone |   IPhone 8 |   800 |    Apple | {'SIM': 'nanoSIM'}
+ 13eaefac-ec5b-d86a-d943-8303acf1c80e |       TV |  32PHT4101 |   200 |  Philips |     {'Size': '32'}
+ 1b938a39-dcb0-961c-5b5d-05b25bd6f79c |       TV | UE40MU6172 |   600 |  Samsung |     {'Size': '40'}
+ 60fa0bf7-2eb2-43b5-e503-75a417677d70 | Notebook |  ZenBook 3 |  1600 |     Asus |    {'Memory': '8'}
+ f26b0b37-53e4-986b-a3b4-2256afcc7403 |    Phone |  Galaxy S8 |  1200 |  Samsung | {'SIM': 'nanoSIM'}
+ 611b72ed-5e83-7e7f-acb5-0b5fc17ccefa |    Phone |   IPhone 6 |   600 |    Apple | {'SIM': 'nanoSIM'}
+ 861be045-015c-1462-f203-bff8c5929622 |    Phone |  Galaxy J5 |   200 |  Samsung | {'SIM': 'miniSIM'}
+
+(9 rows)
+
+ category | price | id
+----------+-------+--------------------------------------
+    Phone |   200 | 861be045-015c-1462-f203-bff8c5929622
+    Phone |   400 | 531f6eca-f441-29f9-254f-9539f30cb3ee
+    Phone |   600 | 611b72ed-5e83-7e7f-acb5-0b5fc17ccefa
+    Phone |   800 | e22dc981-298b-6576-6f42-f6f82c4550aa
+    Phone |  1200 | f26b0b37-53e4-986b-a3b4-2256afcc7403
+
+(5 rows)
+
+ category | model    | id
+----------+----------+--------------------------------------
+    Phone | IPhone 6 | 611b72ed-5e83-7e7f-acb5-0b5fc17ccefa
+
+(1 rows)
+
+ category | price | id
+----------+-------+--------------------------------------
+    Phone |   800 | e22dc981-298b-6576-6f42-f6f82c4550aa
+    Phone |   600 | 611b72ed-5e83-7e7f-acb5-0b5fc17ccefa
+    Phone |   400 | 531f6eca-f441-29f9-254f-9539f30cb3ee
+    Phone |   200 | 861be045-015c-1462-f203-bff8c5929622
+
+(4 rows)
+
+ category | producer | id                                   | price
+----------+----------+--------------------------------------+-------
+    Phone |    Apple | e22dc981-298b-6576-6f42-f6f82c4550aa |   800
+
+(1 rows)
+
+ id                                   | category | model     | price | producer | properties
+--------------------------------------+----------+-----------+-------+----------+--------------------
+ 531f6eca-f441-29f9-254f-9539f30cb3ee |    Phone |  IPhone 5 |   400 |    Apple | {'SIM': 'miniSIM'}
+ e22dc981-298b-6576-6f42-f6f82c4550aa |    Phone |  IPhone 8 |   800 |    Apple | {'SIM': 'nanoSIM'}
+ f26b0b37-53e4-986b-a3b4-2256afcc7403 |    Phone | Galaxy S8 |  1200 |  Samsung | {'SIM': 'nanoSIM'}
+ 611b72ed-5e83-7e7f-acb5-0b5fc17ccefa |    Phone |  IPhone 6 |   600 |    Apple | {'SIM': 'nanoSIM'}
+ 861be045-015c-1462-f203-bff8c5929622 |    Phone | Galaxy J5 |   200 |  Samsung | {'SIM': 'miniSIM'}
+
+(5 rows)
+
+ id                                   | category | model     | price | producer | properties
+--------------------------------------+----------+-----------+-------+----------+--------------------
+ 531f6eca-f441-29f9-254f-9539f30cb3ee |    Phone |  IPhone 5 |   400 |    Apple | {'SIM': 'miniSIM'}
+ 861be045-015c-1462-f203-bff8c5929622 |    Phone | Galaxy J5 |   200 |  Samsung | {'SIM': 'miniSIM'}
+
+(2 rows)
+
+ id                                   | category | model     | price | producer | properties
+--------------------------------------+----------+-----------+-------+----------+--------------------
+ f26b0b37-53e4-986b-a3b4-2256afcc7403 |    Phone | Galaxy S8 |  1200 |  Samsung | {'SIM': 'nanoSIM'}
+
+(1 rows)
+
+ id                                   | category | model     | price | producer | properties
+--------------------------------------+----------+-----------+-------+----------+--------------------
+ f26b0b37-53e4-986b-a3b4-2256afcc7403 |    Phone | Galaxy S8 |  1200 |  Samsung | {'SIM': 'miniSIM'}
+
+(1 rows)
+
+ id                                   | category | model     | price | producer | properties
+--------------------------------------+----------+-----------+-------+----------+-------------------------------------------
+ f26b0b37-53e4-986b-a3b4-2256afcc7403 |    Phone | Galaxy S8 |  1200 |  Samsung | {'Battery': '3000 mAh', 'SIM': 'miniSIM'}
+
+(1 rows)
+
+ id                                   | category | model     | price | producer | properties
+--------------------------------------+----------+-----------+-------+----------+--------------------
+ f26b0b37-53e4-986b-a3b4-2256afcc7403 |    Phone | Galaxy S8 |  1200 |  Samsung | {'SIM': 'miniSIM'}
+
+(1 rows)
